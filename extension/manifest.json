@@ -1,0 +1,10 @@
+{
+	"name": "QuikFIll Extensions",
+	"description": "Base Level Extension",
+	"version": "1.0",
+	"manifest_version": 3,
+	"action": {
+		"default_popup": "img/index.html",
+		"default_icon": "img/icon-50.svg"
+	}
+}
