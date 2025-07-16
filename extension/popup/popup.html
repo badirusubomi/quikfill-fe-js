@@ -17,17 +17,15 @@
 </head>
 
 <body>
-	<h2>QuikFill Application</h2>
-	<form id="loginForm">
-		<button id="googleLogin"><img src="../img/icons8-google-logo-50.svg" alt="Login" /></button>
-	</form>
-	<a href="./user-page-popup.html">Navigate to user page</a>
-	<!--[if lt IE 7]>
-			<p class="browsehappy">
-				You are using an <strong>outdated</strong> browser. Please
-				<a href="#">upgrade your browser</a> to improve your experience.
-			</p>
-		<![endif]-->
+	<div id="loginPage">
+		<h2>QuikFill Application</h2>
+		<button id="googleLogin"><img src="../img/icons8-google-logo-50.svg" alt="Login" />Login with Google</button>
+	</div>
+
+	<div id="homePage" style="display: none;">
+		<h2>Welcome!</h2>
+		<button id="scanFormsBtn">Scan Forms</button>
+	</div>
 
 	<script src="popup.js" async defer></script>
 </body>

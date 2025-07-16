@@ -1,26 +1,53 @@
-function renderReadingTime(article) {
-	// If we weren't provided an article, we don't need to render anything.
-	if (!article) {
-		return;
-	}
+function scanForms() {
+	const forms = document.querySelectorAll('form');
+	const result = [];
 
-	const text = article.textContent;
-	const wordMatchRegExp = /[^\s]+/g; // Regular expression
-	const words = text.matchAll(wordMatchRegExp);
-	// matchAll returns an iterator, convert to array to get word count
-	const wordCount = [...words].length;
-	const readingTime = Math.round(wordCount / 200);
-	const badge = document.createElement("p");
-	// Use the same styling as the publish information in an article's header
-	badge.classList.add("color-secondary-text", "type--caption");
-	badge.textContent = `⏱️ ${readingTime} min read`;
+	forms.forEach((form, index) => {
+		const fields = [];
 
-	// Support for API reference docs
-	const heading = article.querySelector("h1");
-	// Support for article docs with date
-	const date = article.querySelector("time")?.parentNode;
+		const inputs = form.querySelectorAll('input, textarea, select');
+		inputs.forEach(input => {
+			const type = input.type || input.tagName.toLowerCase();
+			const name = input.name || input.id || input.placeholder || '';
 
-	(date ?? heading).insertAdjacentElement("afterend", badge);
+			fields.push({
+				tag: input.tagName.toLowerCase(),
+				type,
+				name,
+				label: getLabel(input),
+				required: input.required || false
+			});
+		});
+
+		result.push({
+			formIndex: index,
+			action: form.action || null,
+			method: form.method || 'GET',
+			fields
+		});
+	});
+
+	return result;
 }
 
-renderReadingTime(document.querySelector("article"));
+function getLabel(input) {
+	const id = input.id;
+	if (id) {
+		const label = document.querySelector(`label[for="${id}"]`);
+		if (label) return label.innerText.trim();
+	}
+
+	// Try to find parent label
+	const parentLabel = input.closest('label');
+	if (parentLabel) return parentLabel.innerText.trim();
+
+	return '';
+}
+
+// Listen for message from popup or background
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	if (message.type === 'SCAN_FORMS') {
+		const forms = scanForms();
+		sendResponse({ forms });
+	}
+});
