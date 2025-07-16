@@ -12,9 +12,17 @@
 			]
 		}
 	],
+	"permissions": ["identity", "storage"],
+  	"oauth2": {
+    "client_id": "290587789881-mffs67ffrv8o78766jr2rk4hqltc3ue2.apps.googleusercontent.com",
+    "scopes": ["email", "profile"]
+  	},
 	"action": {
 		"default_popup": "popup/popup.html",
 		"default_icon": "img/icon-16.png"
+	},
+	"background": {
+		"service_worker": "scripts/background.js"
 	},
 	"icons": {
 		"16": "img/icon-16.png",
