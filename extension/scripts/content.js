@@ -1,3 +1,4 @@
+
 function scanForms() {
 	const forms = document.querySelectorAll('form');
 	const result = [];
@@ -43,6 +44,8 @@ function getLabel(input) {
 
 	return '';
 }
+
+console.log("✅ content.js is running on this page");
 
 // Listen for message from popup or background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
