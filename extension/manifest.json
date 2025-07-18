@@ -17,7 +17,7 @@
 		}
 	],
 	"host_permissions": ["<all_urls>", "http://*/*", "https://*/*"],
-	"permissions": ["activeTab", "scripting", "tabs"],
+	"permissions": ["activeTab", "scripting", "tabs", "identity"],
 	"oauth2": {
 		"client_id": "290587789881-5s2heo357n9oual2accc9vs10p43eo5g.apps.googleusercontent.com",
 		"scopes": ["email", "profile", "openid"]
@@ -25,6 +25,9 @@
 	"action": {
 		"default_popup": "popup/popup.html",
 		"default_icon": "img/icon-16.png"
+	},
+	"background": {
+		"service_worker": "scripts/background.js"
 	},
 	"icons": {
 		"16": "img/icon-16.png",
