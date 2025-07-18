@@ -4,11 +4,11 @@
 	"version": "1.0",
 	"manifest_version": 3,
 	"content_scripts": [
-	{
-		"js": ["scripts/content.js"],
-		"matches": ["<all_urls>"],
-		"run_at": "document_idle"
-	}
+		{
+			"js": ["scripts/content.js"],
+			"matches": ["<all_urls>"],
+			"run_at": "document_idle"
+		}
 	],
 	"web_accessible_resources": [
 		{
@@ -16,26 +16,15 @@
 			"matches": ["<all_urls>"]
 		}
 	],
-  	"host_permissions": [
-		"<all_urls>",
-		"http://*/*",
-		"https://*/*"
-	],
-	"permissions": [
-		"activeTab",
-		"scripting",
-		"tabs"
-	],
-  	"oauth2": {
-		"client_id": "290587789881-mffs67ffrv8o78766jr2rk4hqltc3ue2.apps.googleusercontent.com",
-		"scopes": ["email", "profile"]
-  	},
+	"host_permissions": ["<all_urls>", "http://*/*", "https://*/*"],
+	"permissions": ["activeTab", "scripting", "tabs"],
+	"oauth2": {
+		"client_id": "290587789881-5s2heo357n9oual2accc9vs10p43eo5g.apps.googleusercontent.com",
+		"scopes": ["email", "profile", "openid"]
+	},
 	"action": {
 		"default_popup": "popup/popup.html",
 		"default_icon": "img/icon-16.png"
-	},
-	"background": {
-		"service_worker": "scripts/background.js"
 	},
 	"icons": {
 		"16": "img/icon-16.png",
