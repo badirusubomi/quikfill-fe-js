@@ -1,32 +1,58 @@
 <!DOCTYPE html>
 <html>
-<!--
+	<!--
   QuikFill Application Popup
   This file serves as the popup interface for the QuikFill browser extension.
   It includes a login form and a link to navigate to the user page.
 -->
 
-<head>
-	<meta charset="utf-8" />
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<title>QuikFill</title>
-	<meta name="description" content="" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="stylesheet" href="popup.css" />
-	<script src="popup.js" defer></script>
-</head>
+	<html>
+		<head>
+			<meta charset="utf-8" />
+			<meta
+				http-equiv="X-UA-Compatible"
+				content="IE=edge"
+			/>
+			<title></title>
+			<meta
+				name="description"
+				content=""
+			/>
+			<meta
+				name="viewport"
+				content="width=device-width, initial-scale=1"
+			/>
+			<link
+				rel="stylesheet"
+				href="popup.css"
+			/>
+		</head>
 
-<body>
-	<div id="loginPage">
-		<h1>QuikFill Login</h1>
-		<p>Welcome to QuikFill! Please log in to continue.</p>
-		<button id="googleLogin"><img src="../img/icons8-google-logo-50.svg" alt="Login" />Login with Google</button>
-	</div>
+		<body>
+			<div id="loginPage">
+				<h1>QuikFill Login</h1>
+				<p>Welcome to QuikFill! Please log in to continue.</p>
+				<button id="googleLogin">
+					<img
+						src="../img/icons8-google-logo-50.svg"
+						alt="Login"
+					/>Login with Google
+				</button>
+			</div>
 
-	<div id="homePage" style="display: none;">
-		<h2>Welcome!</h2>
-		<button id="scanFormsBtn">Scan Forms</button>
-	</div>
-</body>
+			<div
+				id="homePage"
+				style="display: none"
+			>
+				<h2>Welcome!</h2>
+				<button id="scanFormsBtn">Scan Forms</button>
+			</div>
 
+			<script
+				src="popup.js"
+				async
+				defer
+			></script>
+		</body>
+	</html>
 </html>
