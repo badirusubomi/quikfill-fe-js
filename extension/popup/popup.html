@@ -50,6 +50,20 @@
 			>
 				<h2>Welcome!</h2>
 				<button id="scanFormsBtn">Scan Forms</button>
+				<form
+					id="uploadForm"
+					method="post"
+					enctype="multipart/form-data"
+					action="http://localhost:8080/upload"
+				>
+					<input
+						id="fileInput"
+						accept=".pdf"
+						type="file"
+						name="file"
+					/>
+					<button id="uploadSubmitBtn">Upload</button>
+				</form>
 			</div>
 
 			<!-- <script

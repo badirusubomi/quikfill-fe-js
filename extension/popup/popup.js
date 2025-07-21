@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
 	const loginBtn = document.getElementById("googleLogin");
 	const scanBtn = document.getElementById("scanFormsBtn");
+	const uploadBtn = document.getElementById("uploadSubmitBtn");
+	const fileInput = document.getElementById("fileInput");
+	const uploadForm = document.getElementById("uploadForm");
 	const loginPage = document.getElementById("loginPage");
 	const homePage = document.getElementById("homePage");
 
@@ -50,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					if (token) {
 						// Store the token in localStorage or chrome.storage
 						localStorage.setItem("token", token);
-						alert("Login successful!");
+						// alert("Login successful!");
 					} else {
 						alert("Token not found");
 					}
@@ -88,6 +91,46 @@ document.addEventListener("DOMContentLoaded", () => {
 			});
 		});
 	}
+
+	uploadForm.addEventListener("submit", async (event) => {
+		// Listen for 'submit' event
+		event.preventDefault(); // <--- THIS IS THE CRUCIAL LINE
+
+		const formData = new FormData();
+		formData.append("file", fileInput.files[0]);
+
+		try {
+			let uploadResponse = await fetch(`http://localhost:8080/upload`, {
+				headers: {
+					authorization: `Bearer ${localStorage.getItem("token")}`,
+					// Note: Content-Type is handled automatically by fetch when using FormData
+					// so you don't need to set it explicitly for multipart/form-data
+				},
+				method: "POST",
+				body: formData,
+			});
+
+			// Always check response.ok for successful HTTP status (200-299)
+			if (!uploadResponse.ok) {
+				const errorData = await uploadResponse.json();
+				console.error(
+					"Upload failed:",
+					errorData.message || uploadResponse.statusText
+				);
+				alert(
+					"Upload failed: " + (errorData.message || uploadResponse.statusText)
+				);
+				return; // Stop execution if response is not OK
+			}
+
+			const responseData = await uploadResponse.json(); // It's .json() not .json
+			console.log("Upload successful:", responseData);
+			alert("File uploaded successfully!");
+		} catch (error) {
+			console.error("Network or parsing error:", error);
+			alert("An error occurred during upload. Check console for details.");
+		}
+	});
 
 	function onLoginSuccess() {
 		if (loginPage) loginPage.style.display = "none";
