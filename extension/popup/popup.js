@@ -7,12 +7,16 @@ document.addEventListener("DOMContentLoaded", () => {
 	const loginPage = document.getElementById("loginPage");
 	const homePage = document.getElementById("homePage");
 
+	if (localStorage.getItem("token")) {
+		onLoginSuccess();
+	}
+
 	if (loginBtn) {
 		loginBtn.addEventListener("click", () => {
 			const authUrl = "http://localhost:8080/auth/login/google";
 
-			// Normally you'd use chrome.identity.launchWebAuthFlow here
-			// Simulating success for now:
+			// Use the Chrome Identity API to handle OAuth2 login
+			// This will open a new window for Google login
 
 			var manifest = chrome.runtime.getManifest();
 
@@ -23,6 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
 			var redirectUri = encodeURIComponent(
 				`http://localhost:8080/auth/google/callback`
 			);
+			// const redirectUri = encodeURIComponent(chrome.identity.getRedirectURL());
+			// console.log("Redirect URI:", redirectUri);
 			var url =
 				"https://accounts.google.com/o/oauth2/auth" +
 				"?client_id=" +
@@ -67,25 +73,59 @@ document.addEventListener("DOMContentLoaded", () => {
 		scanBtn.addEventListener("click", () => {
 			chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 				const activeTab = tabs[0];
+				if (!activeTab) return console.error("No active tab");
 
-				if (!activeTab) {
-					console.error("No active tab found");
-					return;
-				}
-
-				chrome.tabs.sendMessage(
-					activeTab.id,
-					{ type: "SCAN_FORMS" },
-					(response) => {
+				// Inject content.js manually
+				chrome.scripting.executeScript(
+					{
+						target: { tabId: activeTab.id },
+						files: ["scripts/content.js"]
+					},
+					() => {
 						if (chrome.runtime.lastError) {
-							console.error("Error:", chrome.runtime.lastError.message);
+							console.error("Script injection failed:", chrome.runtime.lastError.message);
 							return;
 						}
 
-						if (response && response.forms) {
-							console.log("Forms detected:", response.forms);
-							// TODO: Show in UI or send to LLM
-						}
+						// Now it's safe to send the message
+						chrome.tabs.sendMessage(activeTab.id, { type: "SCAN_FIELDS" }, (response) => {
+							if (chrome.runtime.lastError) {
+								console.error("Message send failed:", chrome.runtime.lastError.message);
+								return;
+							}
+
+							if (response?.fields) {
+								console.log("✅ Fields found:", response.fields);
+
+								(async () => {
+									const queryResponse = await fetch("http://localhost:8080/query", {
+										method: "POST",
+										headers: {
+											"Content-Type": "application/json",
+											authorization: `Bearer ${localStorage.getItem("token")}`,
+										},
+										body: JSON.stringify({
+											data: response.fields.map((field) => ({
+												fieldIndex: field.fieldIndex,
+												label: field.label || ''
+											})),
+										}),
+									});
+
+									if (!queryResponse.ok) {
+										const errorData = await queryResponse.json();
+										console.error("Backend query failed:", errorData);
+										alert("Error: " + (errorData.message || queryResponse.statusText));
+										return;
+									}
+
+									const fieldsData = await queryResponse.json();
+									console.log("🔍 Backend result:", fieldsData);
+								})();
+							} else {
+								console.warn("No fields returned.");
+							}
+						});
 					}
 				);
 			});
