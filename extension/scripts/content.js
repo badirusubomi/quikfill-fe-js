@@ -1,65 +1,10 @@
+// Final content.js with iframe + Shadow DOM + late-load handling
 
-// function scanForms() {
-// 	const forms = document.querySelectorAll('form');
-// 	const result = [];
-
-// 	forms.forEach((form, index) => {
-// 		const fields = [];
-
-// 		const inputs = form.querySelectorAll('input, textarea, select');
-// 		inputs.forEach(input => {
-// 			const type = input.type || input.tagName.toLowerCase();
-// 			const name = input.name || input.id || input.placeholder || '';
-
-// 			fields.push({
-// 				tag: input.tagName.toLowerCase(),
-// 				type,
-// 				name,
-// 				label: getLabel(input),
-// 				required: input.required || false
-// 			});
-// 		});
-
-// 		result.push({
-// 			formIndex: index,
-// 			action: form.action || null,
-// 			method: form.method || 'GET',
-// 			fields
-// 		});
-// 	});
-
-// 	return result;
-// }
-
-// function getLabel(input) {
-// 	const id = input.id;
-// 	if (id) {
-// 		const label = document.querySelector(`label[for="${id}"]`);
-// 		if (label) return label.innerText.trim();
-// 	}
-
-// 	// Try to find parent label
-// 	const parentLabel = input.closest('label');
-// 	if (parentLabel) return parentLabel.innerText.trim();
-
-// 	return '';
-// }
-
-// console.log("✅ content.js is running on this page");
-
-// // Listen for message from popup or background
-// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-// 	if (message.type === 'SCAN_FORMS') {
-// 		const forms = scanForms();
-// 		sendResponse({ forms });
-// 	}
-// });
-
-// Updated content.js
-
-function scanFields() {
+function scanFieldsInDocument(doc = document) {
 	const fieldSelectors = [
 		'input:not([type="hidden"])',
+		'input[type="text"]',
+		'input[type="email"]',
 		'textarea',
 		'select',
 		'[contenteditable="true"]',
@@ -71,7 +16,7 @@ function scanFields() {
 	const result = [];
 
 	fieldSelectors.forEach(selector => {
-		const elements = document.querySelectorAll(selector);
+		const elements = doc.querySelectorAll(selector);
 
 		elements.forEach((el, index) => {
 			const bounding = el.getBoundingClientRect();
@@ -81,7 +26,7 @@ function scanFields() {
 					tag: el.tagName.toLowerCase(),
 					type: el.type || null,
 					name: el.name || el.id || el.placeholder || el.getAttribute('aria-label') || null,
-					label: getLabel(el),
+					label: getLabel(el, doc),
 					required: el.required || el.getAttribute('aria-required') === 'true' || false,
 					value: el.value || el.textContent.trim() || null
 				});
@@ -89,35 +34,98 @@ function scanFields() {
 		});
 	});
 
+	// Handle Shadow DOM
+	const allElements = doc.querySelectorAll('*');
+	allElements.forEach(el => {
+		if (el.shadowRoot) {
+			const shadowFields = scanFieldsInDocument(el.shadowRoot);
+			result.push(...shadowFields);
+		}
+	});
+
+	// Handle same-origin iframes
+	const iframes = doc.querySelectorAll('iframe');
+	iframes.forEach(iframe => {
+		try {
+			const childDoc = iframe.contentDocument || iframe.contentWindow.document;
+			if (childDoc) {
+				const nestedFields = scanFieldsInDocument(childDoc);
+				result.push(...nestedFields);
+			}
+		} catch (err) {
+			console.warn("Cannot access iframe:", iframe.src);
+		}
+	});
+
 	return result;
 }
 
-function getLabel(input) {
+function getLabel(input, doc = document) {
 	const id = input.id;
 	if (id) {
-		const label = document.querySelector(`label[for="${id}"]`);
+		const label = doc.querySelector(`label[for="${id}"]`);
 		if (label) return label.innerText.trim();
 	}
 
-	// Try to find parent label
 	const parentLabel = input.closest('label');
 	if (parentLabel) return parentLabel.innerText.trim();
 
-	// Try ARIA label
 	const ariaLabel = input.getAttribute('aria-label');
 	if (ariaLabel) return ariaLabel;
 
-	// Fallback to placeholder or null
 	return input.placeholder || null;
 }
 
-console.log("✅ content.js is running on this page");
+function scanFields() {
+	return scanFieldsInDocument(document);
+}
 
-// Listen for message from popup or background
+function populateField(el, value) {
+	if (!el) return;
+	if (el.tagName === "TEXTAREA" || el.tagName === "SELECT" || (el.tagName === "INPUT" && el.type !== "file")) {
+		el.value = value;
+		el.dispatchEvent(new Event("input", { bubbles: true }));
+	} else if (el.isContentEditable || el.getAttribute("contenteditable") === "true") {
+		el.textContent = value;
+	} else if (el.tagName === "DIV" && el.getAttribute("role") === "textbox") {
+		el.innerText = value;
+	}
+	el.style.backgroundColor = "#e0ffe0";
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.type === 'SCAN_FIELDS') {
 		const fields = scanFields();
 		sendResponse({ fields });
 	}
+
+	if (message.type === 'POPULATE_FIELDS') {
+		const backendData = message.data;
+
+		backendData.forEach((fieldResponse) => {
+			let el = document.querySelector(`[name="${fieldResponse.label}"], [id="${fieldResponse.label}"]`);
+
+			if (!el) {
+				const possibleElements = document.querySelectorAll(
+					'input:not([type="hidden"]), textarea, select, [contenteditable="true"], div[role="textbox"], div[class*="field"], div[class*="input"]'
+				);
+				el = possibleElements[fieldResponse.fieldIndex];
+			}
+
+			populateField(el, fieldResponse.response);
+		});
+
+		sendResponse({ status: "✅ Fields populated successfully" });
+	}
 });
 
+console.log("✅ content.js loaded and listening");
+
+// Handle late-loaded pages
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", () => {
+		console.log("📄 DOM fully loaded");
+	});
+} else {
+	console.log("📄 DOM already loaded");
+}
