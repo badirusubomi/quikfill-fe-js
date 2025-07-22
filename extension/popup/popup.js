@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
 							return;
 						}
 
-						// Now it's safe to send the message
+						// Now it's safe to send the SCAN_FIELDS message
 						chrome.tabs.sendMessage(activeTab.id, { type: "SCAN_FIELDS" }, (response) => {
 							if (chrome.runtime.lastError) {
 								console.error("Message send failed:", chrome.runtime.lastError.message);
@@ -121,6 +121,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 									const fieldsData = await queryResponse.json();
 									console.log("🔍 Backend result:", fieldsData);
+
+									// Send the data back to content script to populate fields
+									chrome.tabs.sendMessage(activeTab.id, {
+										type: "POPULATE_FIELDS",
+										data: fieldsData.data
+									}, (response) => {
+										if (chrome.runtime.lastError) {
+											console.error("POPULATE_FIELDS error:", chrome.runtime.lastError.message);
+											return;
+										}
+
+										console.log(response.status);
+									});
 								})();
 							} else {
 								console.warn("No fields returned.");
